@@ -1,0 +1,16 @@
+.header__logo {
+  padding-left: 8.4375%;
+  padding-bottom: 31.6px;
+  width: 104px;
+  height: 24px;
+  object-fit: cover;
+}
+
+@media screen and (min-width: 321px) {
+  .header__logo {
+    padding-bottom: 41px;
+    padding-left: calc(39.7px - 3.97vw);
+    width: 142px;
+    height: 33px;
+  }
+}

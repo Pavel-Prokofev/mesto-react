@@ -1,0 +1,12 @@
+.header {
+  margin-bottom: 42px;
+  border-bottom: 1px solid rgba(84, 84, 84, 0.7);
+  font-size: 0;
+  box-sizing: border-box;
+}
+
+@media screen and (min-width: 321px) {
+  .header {
+    margin-bottom: 40px;
+  }
+}
