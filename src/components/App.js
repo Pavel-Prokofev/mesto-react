@@ -14,6 +14,7 @@ function App() {
   const [isConfirmationPopupOpen, setIsConfirmationPopupOpen] = React.useState(false);
   const [selectedCard, setSelectedCard] = React.useState({ tugle: false, data: {} });
   const [isErrorPopupOpen, setIsErrorPopupOpen] = React.useState({ tugle: false, errorText: '' });
+  const [dellCardId, setDellCardId] = React.useState('');
 
   const handleEditAvatarClick = () => {
     setIsEditAvatarPopupOpen(true);
@@ -25,7 +26,10 @@ function App() {
     setIsAddPlacePopupOpen(true);
   };
 
-  const dellCardId = '';
+  const handleDellCardId = (dellCardId) => {
+    setDellCardId(dellCardId)
+  };
+
   const handleConfirmationPopupOpen = () => {
     setIsConfirmationPopupOpen(true);
   };
@@ -62,7 +66,7 @@ function App() {
       <Header />
       <Main onEditAvatar={handleEditAvatarClick} onEditProfile={handleEditProfileClick}
         onAddPlace={handleAddPlaceClick} onErrorPopup={handleErrorPopupOpen} onCardClick={handleCardClick}
-        onConfirmationPopup={handleConfirmationPopupOpen} dellCardId={dellCardId} />
+        onConfirmationPopup={handleConfirmationPopupOpen} dellCardId={handleDellCardId} />
       <Footer />
       <PopupWithForm name='edit-avatar' title='Обновить аватар' buttonText='Сохранить' isOpen={isEditAvatarPopupOpen} onClose={handleCloseEvent}>
         <fieldset className="popup__personal-data">

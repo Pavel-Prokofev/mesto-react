@@ -31,6 +31,39 @@ function Main(props) {
       });
   }, []);
 
+/*Бодрого времени суток. Вынес обработчики из функционального компонента Card, чтобы не плодить их
+при каждом создании экземпляра карточки. Если это не нарушает правил, хотел бы
+попросить коментарий по этому поводу. Также прошу коментарий, опять же если это разрешено,
+по поводу key, это не пропс, а присвоение ключа экземпляру вызываемого компонента, 
+вместо присвоения ключа возвращаемому элементу разметки, хотелось бы знать на сколько корректно
+подобное присвоение ключа, уровнем выше, я пока не смог найти конкретной информации
+по этому вопросу и пришёл к решению проблемы эмпирическим путём. Спасибо за "можно лучше", 
+не приходил в голову такой вариант использования, постораюсь запомнить =) и обязательно, на днях,
+изучу Date подетальней*/
+
+/*Если мой манифест противоречит имеющимся правилам и сложившимся традициям, прошу его игнорировать 0_щ*/
+
+  function checkUserLike(card) {
+    return card.likes.some(like => like._id === userId)
+  };
+
+  function handleClickImg(card) {
+    props.onCardClick({ name: card.name, link: card.link });
+  }
+
+  function handleClickUrn(dellCard) {
+    props.onConfirmationPopup();
+    props.dellCardId(dellCard._id);
+  }
+
+  const listOfCards = cards.map((card) => <Card card={card}
+    key={card._id}
+    userId={userId}
+    onCardClick={handleClickImg}
+    onUrn={handleClickUrn}
+    checkUserLike={checkUserLike}
+  />);
+
   return (
     <main className="content">
 
@@ -47,13 +80,11 @@ function Main(props) {
             <button type="button" className="profile__edit-button button-opacity" onClick={props.onEditProfile}></button>
           </div>
         </div>
-
         <button type="button" className="profile__add-button button-opacity" onClick={props.onAddPlace}></button>
       </section>
-
       <section className="gallery" aria-label="Фото галерея">
         <ul className="gallery__cards">
-          <Card cards={cards} userId={userId} onCardClick={props.onCardClick} onUrn={props.onConfirmationPopup} dellCardId={props.dellCardId}/>
+          {listOfCards}
         </ul>
       </section>
 
