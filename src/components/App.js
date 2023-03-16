@@ -1,29 +1,42 @@
 import React from 'react';
+
 import Header from './Header.js';
 import Main from './Main.js';
 import Footer from './Footer.js';
 import PopupWithForm from './PopupWithForm.js';
+import EditProfilePopup from './EditProfilePopup.js';
+import EditAvatarPopup from './EditAvatarPopup.js';
+import AddPlacePopup from './AddPlacePopup.js';
 import ImagePopup from './ImagePopup.js';
 import ErrorPopup from './ErrorPopup.js';
+import api from '../utils/api.js';
+import { CurrentUserContext } from '../contexts/CurrentUserContext.js';
 
 function App() {
 
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = React.useState(false);
+  const [currentUser, setCurrentUser] = React.useState({});
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = React.useState(false);
-  const [isConfirmationPopupOpen, setIsConfirmationPopupOpen] = React.useState(false);
+  const [cards, setCards] = React.useState([]);
   const [selectedCard, setSelectedCard] = React.useState({ tugle: false, data: {} });
-  const [isErrorPopupOpen, setIsErrorPopupOpen] = React.useState({ tugle: false, errorText: '' });
   const [dellCardId, setDellCardId] = React.useState('');
+  const [isErrorPopupOpen, setIsErrorPopupOpen] = React.useState({ tugle: false, errorPopupText: '' });
+  const [isConfirmationPopupOpen, setIsConfirmationPopupOpen] = React.useState(false);
+  const [errorText, setErrorText] = React.useState('');
+  const [submitButtonText, setSubmitButtonText] = React.useState('');
 
   const handleEditAvatarClick = () => {
     setIsEditAvatarPopupOpen(true);
+    setSubmitButtonText('Сохранить');
   };
   const handleEditProfileClick = () => {
     setIsEditProfilePopupOpen(true);
+    setSubmitButtonText('Сохранить');
   };
   const handleAddPlaceClick = () => {
     setIsAddPlacePopupOpen(true);
+    setSubmitButtonText('Создать');
   };
 
   const handleDellCardId = (dellCardId) => {
@@ -32,23 +45,25 @@ function App() {
 
   const handleConfirmationPopupOpen = () => {
     setIsConfirmationPopupOpen(true);
+    setSubmitButtonText('Ок');
   };
 
   const handleCardClick = (card) => {
     setSelectedCard({ tugle: true, data: card });
   };
 
-  const handleErrorPopupOpen = (newErrorText) => {
-    setIsErrorPopupOpen({ tugle: true, errorText: newErrorText });
+  const handleErrorPopupOpen = (newErrorPopupText) => {
+    setIsErrorPopupOpen({ tugle: true, errorPopupText: newErrorPopupText });
   };
 
   const closeAllPopups = () => {
+    setErrorText(``);
     setIsEditAvatarPopupOpen(false);
     setIsEditProfilePopupOpen(false);
     setIsAddPlacePopupOpen(false);
     setIsConfirmationPopupOpen(false);
     setSelectedCard({ tugle: false, data: {} });
-    setIsErrorPopupOpen({ tugle: false, errorText: '' });
+    setIsErrorPopupOpen({ tugle: false, errorPopupText: '' });
   };
 
   const handleCloseEvent = (evt) => {
@@ -61,43 +76,143 @@ function App() {
     } else if (evt.type === 'keydown') { if (evt.key === 'Escape') { closeAllPopups(); } };
   };
 
+  React.useEffect(() => {
+    api.getUserInfo()
+      .then((res) => {
+        setCurrentUser(res);
+        if (res._id) {
+          api.getAllCards()
+            .then((res) => {
+              setCards(res);
+            })
+            .catch((err) => {
+              handleErrorPopupOpen(`Ошибка при загрузке карточек с сервера: ${err}.`);
+              setCards([]);
+            });
+        }
+      })
+      .catch((err) => {
+        handleErrorPopupOpen(`Ошибка при загрузке данных пользователя с сервера: ${err}.`);
+        setCurrentUser({});
+        setCards([]);
+      });
+  }, []);
+
+  const checkUserLike = (card) => {
+    return card.likes.some(like => like._id === currentUser._id)
+  };
+
+  const handleCardLike = (card) => {
+
+    const isLiked = checkUserLike(card) ? 'delCardLike' : 'putCardLike';
+
+    api[isLiked](card._id)
+      .then((newCard) => {
+        setCards(cards.map((c) => c._id === card._id ? newCard : c));
+      })
+      .catch((err) => {
+        const isLiked = checkUserLike(card) ? 'Ошибка при удалении лайка карточки с сервера:' : 'Ошибка при добавлении лайка карточки на сервер:';
+        handleErrorPopupOpen(`${isLiked} ${err}.`);
+      });
+  };
+
+  const handleDellCard = (evt) => {
+    evt.preventDefault()
+    setErrorText(``);
+    setSubmitButtonText('Удаление...');
+    api.delCard(dellCardId)
+      .then(() => {
+        setCards(cards.filter((c) => c._id !== dellCardId));
+        closeAllPopups();
+      })
+      .catch((err) => {
+        setErrorText(`Ошибка при удалении карточки с сервера: ${err}.`);
+      })
+      .finally(() => {
+        setSubmitButtonText('Ок');
+      });
+  };
+
+  const handleAddCard = ({ name, link }) => {
+    setErrorText(``);
+    if (currentUser._id) {
+      setSubmitButtonText('Создание...');
+      api.postNewCard({ name, link })
+        .then((newCard) => {
+          setCards([newCard, ...cards]);
+          closeAllPopups();
+        })
+        .catch((err) => {
+          setErrorText(`Ошибка при загрузке новой карточки на сервер: ${err}.`);
+        })
+        .finally(() => {
+          setSubmitButtonText('Создать');
+        });
+    } else {
+      setErrorText(`Ошибка при загрузке новой карточки на сервер вызваная некорреректной загрузкой данных пользователя.`);
+    };
+  }
+
+  const handleUpdateUser = ({ name, about }) => {
+    setErrorText(``);
+    if (currentUser._id) {
+      setSubmitButtonText('Сохранение...');
+      api.patchUserInfo({ name, about })
+        .then((res) => {
+          setCurrentUser(res);
+          closeAllPopups();
+        })
+        .catch((err) => {
+          setErrorText(`Ошибка при перезаписи данных пользователя: ${err}.`);
+        })
+        .finally(() => {
+          setSubmitButtonText('Сохранить');
+        });
+    } else {
+      setErrorText(`Ошибка при загрузке новых данных на сервер вызваная некорреректной загрузкой данных пользователя.`);
+    }
+  };
+
+  const handleUpdateUserAvatar = ({ avatar }) => {
+    setErrorText(``);
+    if (currentUser._id) {
+      setSubmitButtonText('Сохранение...');
+      api.patchUserAvatar({ avatar })
+        .then((res) => {
+          setCurrentUser(res);
+          closeAllPopups();
+        })
+        .catch((err) => {
+          setErrorText(`Ошибка при перезаписи аватара пользователя: ${err}.`);
+        })
+        .finally(() => {
+          setSubmitButtonText('Сохранить');
+        });
+    } else {
+      setErrorText(`Ошибка при загрузке новых данных на сервер вызваная некорреректной загрузкой данных пользователя.`);
+    }
+  };
+
   return (
     <div className="page" onKeyDown={evt => { evt.key === 'Escape' && closeAllPopups() }}>
       <Header />
-      <Main onEditAvatar={handleEditAvatarClick} onEditProfile={handleEditProfileClick}
-        onAddPlace={handleAddPlaceClick} onErrorPopup={handleErrorPopupOpen} onCardClick={handleCardClick}
-        onConfirmationPopup={handleConfirmationPopupOpen} dellCardId={handleDellCardId} />
-      <Footer />
-      <PopupWithForm name='edit-avatar' title='Обновить аватар' buttonText='Сохранить' isOpen={isEditAvatarPopupOpen} onClose={handleCloseEvent}>
-        <fieldset className="popup__personal-data">
-          <input type="url" name="avatar" id="avatar-input" className="popup__text-box popup__text-box_type_avatar-src"
-            defaultValue="" placeholder="Ссылка на аватар" required />
-          <span className="popup__text-box-error avatar-input-error"></span>
-        </fieldset>
-      </PopupWithForm>
-      <PopupWithForm name='edit' title='Редактировать профиль' buttonText='Сохранить' isOpen={isEditProfilePopupOpen} onClose={handleCloseEvent}>
-        <fieldset className="popup__personal-data">
-          <input type="text" name="username" id="username-input" className="popup__text-box popup__text-box_type_name"
-            defaultValue="" placeholder="Имя" required minLength="2" maxLength="40" />
-          <span className="popup__text-box-error username-input-error"></span>
-          <input type="text" name="occupation" id="occupation-input" className="popup__text-box popup__text-box_type_info"
-            defaultValue="" placeholder="Личная информация" required minLength="2" maxLength="200" />
-          <span className="popup__text-box-error occupation-input-error"></span>
-        </fieldset>
-      </PopupWithForm>
-      <PopupWithForm name='add' title='Новое место' buttonText='Создать' isOpen={isAddPlacePopupOpen} onClose={handleCloseEvent}>
-        <fieldset className="popup__personal-data">
-          <input type="text" name="title" id="title-input" className="popup__text-box popup__text-box_type_title" defaultValue=""
-            placeholder="Название" required minLength="2" maxLength="30" />
-          <span className="popup__text-box-error title-input-error"></span>
-          <input type="url" name="img" id="img-src-input" className="popup__text-box popup__text-box_type_img-src"
-            defaultValue="" placeholder="Ссылка на картинку" required />
-          <span className="popup__text-box-error img-src-input-error"></span>
-        </fieldset>
-      </PopupWithForm>
-      <PopupWithForm name='confirmation' title='Вы уверены?' buttonText='Да' isOpen={isConfirmationPopupOpen} onClose={handleCloseEvent} />
+      <CurrentUserContext.Provider value={currentUser}>
+        <Main onEditAvatar={handleEditAvatarClick} onEditProfile={handleEditProfileClick}
+          onAddPlace={handleAddPlaceClick} onErrorPopup={handleErrorPopupOpen} onCardClick={handleCardClick}
+          onConfirmationPopup={handleConfirmationPopupOpen} dellCardId={handleDellCardId}
+          cards={cards} checkUserLike={checkUserLike} onCardLike={handleCardLike} />
+        <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={handleCloseEvent} onUpdateUser={handleUpdateUser}
+          buttonText={submitButtonText} errorText={errorText} />
+      </CurrentUserContext.Provider>
+      <EditAvatarPopup isOpen={isEditAvatarPopupOpen} onClose={handleCloseEvent} onUpdateUserAvatar={handleUpdateUserAvatar}
+        buttonText={submitButtonText} errorText={errorText} />
+      <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={handleCloseEvent} onAddPlace={handleAddCard}
+        buttonText={submitButtonText} errorText={errorText} />
+      <PopupWithForm name='confirmation' title='Вы уверены?' buttonText={submitButtonText} errorText={errorText}
+        isOpen={isConfirmationPopupOpen} onClose={handleCloseEvent} onSubmit={handleDellCard} />
       <ImagePopup card={selectedCard} onClose={handleCloseEvent} />
-      <ErrorPopup errorText='' isOpen={isErrorPopupOpen} onClose={handleCloseEvent} />
+      <ErrorPopup isOpen={isErrorPopupOpen} onClose={handleCloseEvent} />
+      <Footer />
     </div>
   );
 }

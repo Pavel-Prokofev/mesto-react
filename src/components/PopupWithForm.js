@@ -20,11 +20,11 @@ function PopupWithForm(props) {
       <div className="popup__content">
         <button type="button" className="popup__close-button button-opacity"></button>
         <h2 className="popup__title">{`${props.title}`}</h2>
-        <form name={`${props.name}`} className="popup__form" noValidate>
+        <form name={`${props.name}`} className="popup__form" noValidate onSubmit={props.onSubmit}>
           {props.children}
           <button type="submit" className="popup__save-button">{`${props.buttonText}`}</button>
         </form>
-        <span className="popup__text-box-error loading-error"></span>
+        <span className="popup__text-box-error loading-error">{props.errorText}</span>
       </div>
     </div>
   );
