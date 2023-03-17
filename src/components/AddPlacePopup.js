@@ -5,39 +5,63 @@ import PopupWithForm from './PopupWithForm.js';
 function AddPlacePopup(props) {
 
   const [title, setTitle] = React.useState('');
-  const [imgUrl, setImgUrl] = React.useState('');
+  const [img, setImgUrl] = React.useState('');
+  const [titleError, setTitleError] = React.useState('');
+  const [imgError, setImgError] = React.useState('');
+  const [titleValid, setTitleValid] = React.useState(false);
+  const [imgValid, setImgValid] = React.useState(false);
+  const [isValid, setisValid] = React.useState(false);
 
   React.useEffect(() => {
     setTitle('');
     setImgUrl('');
+    setTitleError('');
+    setImgError('');
+    setTitleValid(false);
+    setImgValid(false);
+    setisValid(false);
   }, [props.isOpen]);
+
+  React.useEffect(() => {
+    if (titleValid && imgValid) {
+      setisValid(true);
+    } else {
+      setisValid(false);
+    };
+  }, [titleValid, imgValid]);
+
+  const checkValid = async (inputElement, errorElement, validElement) => {
+    !inputElement.target.validity.valid ? validElement(false) : validElement(true);
+    !inputElement.target.validity.valid ? errorElement(inputElement.target.validationMessage) : errorElement('');
+  };
 
   const handleChangeTitle = (evt) => {
     setTitle(evt.target.value);
+    checkValid(evt, setTitleError, setTitleValid);
   };
 
-  const handleChangeImgUrl = (evt) => {
+  const handleChangeImg = (evt) => {
     setImgUrl(evt.target.value);
+    checkValid(evt, setImgError, setImgValid);
   };
 
-  const handleSubmit = (evt) => {
-    evt.preventDefault();
-
+  const handleSubmit = () => {
     props.onAddPlace({
       name: title,
-      link: imgUrl
+      link: img
     });
   };
 
   return (
-    <PopupWithForm name='add' title='Новое место' buttonText={props.buttonText} errorText={props.errorText} isOpen={props.isOpen} onClose={props.onClose} onSubmit={handleSubmit}>
+    <PopupWithForm name='add' title='Новое место' buttonText={props.buttonText} errorText={props.errorText}
+      isOpen={props.isOpen} onClose={props.onClose} onSubmit={handleSubmit} isValid={isValid}>
       <fieldset className="popup__personal-data">
         <input type="text" name="title" id="title-input" className="popup__text-box popup__text-box_type_title"
           value={title} onChange={handleChangeTitle} placeholder="Название" required minLength="2" maxLength="30" />
-        <span className="popup__text-box-error title-input-error"></span>
+        <span className="popup__text-box-error title-input-error">{titleError}</span>
         <input type="url" name="img" id="img-src-input" className="popup__text-box popup__text-box_type_img-src"
-          value={imgUrl} onChange={handleChangeImgUrl} placeholder="Ссылка на картинку" required />
-        <span className="popup__text-box-error img-src-input-error"></span>
+          value={img} onChange={handleChangeImg} placeholder="Ссылка на картинку" required />
+        <span className="popup__text-box-error img-input-error">{imgError}</span>
       </fieldset>
     </PopupWithForm>
   );

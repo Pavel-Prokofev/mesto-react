@@ -12,6 +12,19 @@ import ErrorPopup from './ErrorPopup.js';
 import api from '../utils/api.js';
 import { CurrentUserContext } from '../contexts/CurrentUserContext.js';
 
+/*Бодрого времени суток. Очень не хотелось отступать и возвращать машинную валидацию,
+ а потому с ней я вроде справился, правда как то криво и топорненько, 
+ но уже не соображаю как можно улучшить, а скоро на работу 0_щ, буду благодарен за ссылку на эту тему.
+ К сожалению не разобрался с пунктом можно лучше, у меня, как и у других возникла проблема 
+ с асинхронностью и с тем, что сет отдаёт предпоследнее значение и я его не могу дальше обработать, к сожалению в предоставленной ссылке,
+ как мне показалось, эта тема раскрыта так себе, а хочется понимать как этим пользоваться, потому прошу, если есть возможность, ссылку, 
+ раскрывающую эту тему несколько подробней, в любом случае спасибо ;-) И вообще, больше ссылок хороших и по возможности понятных =)*/ 
+
+/* P.S. Да, чуть не забыл, огромное спасибо за if, как то я его умудрился проморгать =) */
+
+
+ /*Если мой манифест противоречит имеющимся правилам и сложившимся традициям, прошу его игнорировать 0_щ*/  
+
 function App() {
 
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
@@ -209,7 +222,7 @@ function App() {
       <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={handleCloseEvent} onAddPlace={handleAddCard}
         buttonText={submitButtonText} errorText={errorText} />
       <PopupWithForm name='confirmation' title='Вы уверены?' buttonText={submitButtonText} errorText={errorText}
-        isOpen={isConfirmationPopupOpen} onClose={handleCloseEvent} onSubmit={handleDellCard} />
+        isOpen={isConfirmationPopupOpen} onClose={handleCloseEvent} onSubmit={handleDellCard} isValid={true} />
       <ImagePopup card={selectedCard} onClose={handleCloseEvent} />
       <ErrorPopup isOpen={isErrorPopupOpen} onClose={handleCloseEvent} />
       <Footer />
