@@ -14,10 +14,9 @@ function EditAvatarPopup(props) {
     avatarUrlRef.current.value = '';
   }, [props.isOpen]);
 
-
-  const checkValid = async (inputElement, errorElement, validElement) => {
-    !inputElement.target.validity.valid ? validElement(false) : validElement(true);
-    !inputElement.target.validity.valid ? errorElement(inputElement.target.validationMessage) : errorElement('');
+  const checkValid = async (evt, setError, setValid) => {
+    setValid(evt.target.validity.valid);
+    setError(evt.target.validity.valid ? '' : evt.target.validationMessage);
   };
 
   const handleChangeAvatar = (evt) => {
